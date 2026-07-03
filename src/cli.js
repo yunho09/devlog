@@ -2,9 +2,9 @@
 
 import { loadEnv, getConfig } from "./config.js";
 import { formatDate, recentRange, todayRange } from "./date.js";
-import { fetchCommits } from "./github.js";
-import { summarizeCommit } from "./summarize.js";
-import { writeCommitNote } from "./obsidian.js";
+import { fetchPullRequests } from "./github.js";
+import { summarizePullRequest } from "./summarize.js";
+import { writePullRequestNote } from "./obsidian.js";
 import { loadState, saveState } from "./state.js";
 
 async function main() {
@@ -34,20 +34,20 @@ async function main() {
 async function runToday(config) {
   const range = todayRange();
 
-  const commits = await fetchCommits({
+  const pullRequests = await fetchPullRequests({
     token: config.githubToken,
     username: config.githubUsername,
     since: range.since,
     until: range.until
-  }).then((items) => filterCommits(items, config));
+  }).then((items) => filterPullRequests(items, config));
 
-  if (commits.length === 0) {
-    console.log("No commits found for today.");
+  if (pullRequests.length === 0) {
+    console.log("No pull requests found for today.");
     return;
   }
 
-  for (const commit of commits) {
-    const filePath = await writeCommit(config, commit);
+  for (const pullRequest of pullRequests) {
+    const filePath = await writePullRequest(config, pullRequest);
     console.log(`Wrote ${filePath}`);
   }
 }
@@ -58,58 +58,61 @@ async function runSync(config) {
     vaultPath: config.obsidianVault,
     devlogDir: config.obsidianDevlogDir
   });
-  const processed = new Set(state.processedCommits);
+  const processed = new Set(state.processedPullRequests);
 
-  const commits = await fetchCommits({
+  const pullRequests = await fetchPullRequests({
     token: config.githubToken,
     username: config.githubUsername,
     since: range.since,
     until: range.until
-  }).then((items) => filterCommits(items, config));
+  }).then((items) => filterPullRequests(items, config));
 
-  const newCommits = commits.filter((commit) => !processed.has(commit.sha));
+  const newPullRequests = pullRequests.filter((pullRequest) => !processed.has(pullRequest.id));
 
-  if (newCommits.length === 0) {
-    console.log("No new commits found.");
+  if (newPullRequests.length === 0) {
+    console.log("No new pull requests found.");
     return;
   }
 
-  for (const commit of newCommits.reverse()) {
-    const filePath = await writeCommit(config, commit);
-    processed.add(commit.sha);
+  for (const pullRequest of newPullRequests.reverse()) {
+    const filePath = await writePullRequest(config, pullRequest);
+    processed.add(pullRequest.id);
     await saveState({
       vaultPath: config.obsidianVault,
       devlogDir: config.obsidianDevlogDir,
-      state: { processedCommits: [...processed] }
+      state: {
+        processedCommits: state.processedCommits,
+        processedPullRequests: [...processed]
+      }
     });
 
     console.log(`Wrote ${filePath}`);
   }
 }
 
-async function writeCommit(config, commit) {
-  const dateLabel = formatDate(new Date(commit.committedAt));
-  const markdown = await summarizeCommit({
+async function writePullRequest(config, pullRequest) {
+  const dateLabel = formatDate(new Date(pullRequest.mergedAt || pullRequest.closedAt || pullRequest.updatedAt));
+  const markdown = await summarizePullRequest({
     geminiApiKey: config.geminiApiKey,
     geminiModel: config.geminiModel,
     openaiApiKey: config.openaiApiKey,
     openaiModel: config.openaiModel,
     dateLabel,
-    commit
+    pullRequest
   });
 
-  return writeCommitNote({
+  return writePullRequestNote({
     vaultPath: config.obsidianVault,
     devlogDir: config.obsidianDevlogDir,
     dateLabel,
-    commit,
+    pullRequest,
     markdown
   });
 }
 
-function filterCommits(commits, config) {
-  return commits.filter((commit) => {
-    const repo = commit.repo.toLowerCase();
+function filterPullRequests(pullRequests, config) {
+  return pullRequests.filter((pullRequest) => {
+    const repo = pullRequest.repo.toLowerCase();
     const repoName = repo.split("/").pop();
 
     if (config.includedRepos.length > 0) {

@@ -11,11 +11,12 @@ export async function loadState({ vaultPath, devlogDir }) {
     const parsed = JSON.parse(raw);
 
     return {
-      processedCommits: Array.isArray(parsed.processedCommits) ? parsed.processedCommits : []
+      processedCommits: Array.isArray(parsed.processedCommits) ? parsed.processedCommits : [],
+      processedPullRequests: Array.isArray(parsed.processedPullRequests) ? parsed.processedPullRequests : []
     };
   } catch (error) {
     if (error.code === "ENOENT") {
-      return { processedCommits: [] };
+      return { processedCommits: [], processedPullRequests: [] };
     }
 
     throw error;
@@ -26,7 +27,8 @@ export async function saveState({ vaultPath, devlogDir, state }) {
   const directory = path.join(vaultPath, devlogDir);
   const filePath = getStatePath({ vaultPath, devlogDir });
   const data = {
-    processedCommits: [...new Set(state.processedCommits)].sort()
+    processedCommits: [...new Set(state.processedCommits || [])].sort(),
+    processedPullRequests: [...new Set(state.processedPullRequests || [])].sort()
   };
 
   await fs.mkdir(directory, { recursive: true });

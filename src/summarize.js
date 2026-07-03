@@ -1,14 +1,13 @@
-export async function summarizeCommit({
+export async function summarizePullRequest({
   geminiApiKey,
   geminiModel,
   openaiApiKey,
   openaiModel,
   dateLabel,
-  commit
+  pullRequest
 }) {
-  const projectName = commit.repo.split("/").pop() || commit.repo;
-  const shortSha = commit.sha.slice(0, 7);
-  const prompt = buildPrompt({ dateLabel, commit, projectName, shortSha });
+  const projectName = pullRequest.repo.split("/").pop() || pullRequest.repo;
+  const prompt = buildPrompt({ dateLabel, pullRequest, projectName });
 
   if (geminiApiKey) {
     try {
@@ -36,7 +35,12 @@ export async function summarizeCommit({
     }
   }
 
-  return buildBasicCommitNote({ dateLabel, commit, projectName, shortSha, reason: "AI API를 사용할 수 없어" });
+  return buildBasicPullRequestNote({
+    dateLabel,
+    pullRequest,
+    projectName,
+    reason: "AI API를 사용할 수 없어"
+  });
 }
 
 async function summarizeWithGemini({ apiKey, model, prompt, dateLabel }) {
@@ -49,7 +53,7 @@ async function summarizeWithGemini({ apiKey, model, prompt, dateLabel }) {
     body: JSON.stringify({
       model,
       system_instruction:
-        "You write concise Korean developer worklogs for Obsidian. Write one note for one Git commit. Focus on what changed, why it matters, and what can be inferred from the commit message. Avoid hype. Do not invent details that are not supported by the commit data.",
+        "You write concise Korean developer worklogs for Obsidian. Write one note for one GitHub pull request. Focus on what changed, why it matters, the commits included in the PR, and notable files. Avoid hype. Do not invent details that are not supported by the PR data.",
       input: prompt
     })
   });
@@ -78,7 +82,7 @@ async function summarizeWithOpenAI({ apiKey, model, prompt, dateLabel }) {
         {
           role: "system",
           content:
-            "You write concise Korean developer worklogs for Obsidian. Write one note for one Git commit. Focus on what changed, why it matters, and what can be inferred from the commit message. Avoid hype. Do not invent details that are not supported by the commit data."
+            "You write concise Korean developer worklogs for Obsidian. Write one note for one GitHub pull request. Focus on what changed, why it matters, the commits included in the PR, and notable files. Avoid hype. Do not invent details that are not supported by the PR data."
         },
         {
           role: "user",
@@ -99,62 +103,120 @@ async function summarizeWithOpenAI({ apiKey, model, prompt, dateLabel }) {
   return normalizeMarkdown(text, dateLabel);
 }
 
-function buildPrompt({ dateLabel, commit, projectName, shortSha }) {
-  const commitText = [
-    `Repository: ${commit.repo}`,
-    `Commit: ${commit.sha}`,
-    `Time: ${commit.committedAt}`,
-    `Message: ${commit.message}`,
-    `URL: ${commit.url}`
-  ].join("\n");
+function buildPrompt({ dateLabel, pullRequest, projectName }) {
+  const commitsText = pullRequest.commits
+    .map((commit) => {
+      return [
+        `- ${commit.sha.slice(0, 7)} ${commit.message.split(/\r?\n/)[0]}`,
+        `  Time: ${commit.committedAt}`,
+        `  URL: ${commit.url}`
+      ].join("\n");
+    })
+    .join("\n");
 
-  return `Write an Obsidian Markdown devlog for ${dateLabel} from this GitHub commit.
+  const filesText = pullRequest.files
+    .map((file) => `- ${file.filename} (${file.status}, +${file.additions}/-${file.deletions})`)
+    .join("\n");
+
+  return `Write an Obsidian Markdown devlog for ${dateLabel} from this GitHub pull request.
 
 Use exactly this structure:
 # ${dateLabel}
 
 ## 요약
-Write 2-4 concise Korean sentences summarizing this single commit.
+Write 2-4 concise Korean sentences summarizing this PR.
 
 ## 변경 내용
-- List the concrete changes in Korean.
+- List the concrete changes in Korean based on the PR title, body, commits, and changed files.
 - Mention added, changed, removed, or fixed behavior when it can be inferred.
 
 ## 의도
 Explain why this change was likely made in Korean.
-If the commit data is not enough, explicitly say "커밋 메시지 기준으로는 ..." and keep the inference conservative.
+If the PR data is not enough, explicitly say "PR 정보 기준으로는 ..." and keep the inference conservative.
 
-## 커밋
+## 포함된 커밋
+- List each commit with short SHA and message in Korean or preserve the original message when clearer.
+
+## 변경 파일
+- Summarize the important changed files and what they likely affected.
+
+## 생각 정리
+- Ask exactly 3 reflection questions in Korean.
+- Make the first 2 questions specific to what this PR changed, using the PR title, commits, and changed files.
+- Make the last question ask about what the developer felt or learned while doing this PR.
+
+## PR
 - 프로젝트: ${projectName}
-- 저장소: ${commit.repo}
-- 해시: ${shortSha}
-- 시간: ${commit.committedAt}
-- 링크: ${commit.url}
+- 저장소: ${pullRequest.repo}
+- 번호: #${pullRequest.number}
+- 상태: ${pullRequest.mergedAt ? "merged" : pullRequest.state}
+- 브랜치: ${pullRequest.headRef} -> ${pullRequest.baseRef}
+- 변경량: +${pullRequest.additions}/-${pullRequest.deletions}, 파일 ${pullRequest.changedFiles}개
+- 시간: ${pullRequest.mergedAt || pullRequest.closedAt || pullRequest.updatedAt}
+- 링크: ${pullRequest.url}
 
-Commit details:
-${commitText}`;
+PR details:
+Repository: ${pullRequest.repo}
+PR: #${pullRequest.number} ${pullRequest.title}
+State: ${pullRequest.state}
+Draft: ${pullRequest.draft}
+Created: ${pullRequest.createdAt}
+Updated: ${pullRequest.updatedAt}
+Closed: ${pullRequest.closedAt || ""}
+Merged: ${pullRequest.mergedAt || ""}
+Base: ${pullRequest.baseRef}
+Head: ${pullRequest.headRef}
+Body:
+${pullRequest.body || "(no body)"}
+
+Commits:
+${commitsText || "(no commits)"}
+
+Changed files:
+${filesText || "(no files)"}`;
 }
 
-function buildBasicCommitNote({ dateLabel, commit, projectName, shortSha, reason }) {
-  const subject = commit.message.split(/\r?\n/).find(Boolean) || "커밋 메시지 없음";
+function buildBasicPullRequestNote({ dateLabel, pullRequest, projectName, reason }) {
+  const commits = pullRequest.commits
+    .map((commit) => `- ${commit.sha.slice(0, 7)} ${commit.message.split(/\r?\n/)[0]}`)
+    .join("\n");
+  const files = pullRequest.files
+    .map((file) => `- ${file.filename} (${file.status}, +${file.additions}/-${file.deletions})`)
+    .join("\n");
+  const primaryFile = pullRequest.files[0]?.filename || "변경된 파일";
 
   return `# ${dateLabel}
 
 ## 요약
-${projectName} 프로젝트에서 "${subject}" 작업이 기록되었습니다. ${reason} 커밋 메시지 기준의 기본 노트로 생성했습니다.
+${projectName} 프로젝트에서 PR #${pullRequest.number} "${pullRequest.title}" 작업이 기록되었습니다. ${reason} PR 정보 기준의 기본 노트로 생성했습니다.
 
 ## 변경 내용
-- 커밋 메시지: ${subject}
+- PR 제목: ${pullRequest.title}
+- PR 본문: ${pullRequest.body || "본문 없음"}
+- 변경 파일: ${pullRequest.changedFiles}개 (+${pullRequest.additions}/-${pullRequest.deletions})
 
 ## 의도
-커밋 메시지 기준으로는 해당 변경이 프로젝트 작업 내역을 기록하기 위해 추가되었습니다.
+PR 정보 기준으로는 해당 변경이 프로젝트 작업 내역을 기록하기 위해 추가되었습니다.
 
-## 커밋
+## 포함된 커밋
+${commits || "- 커밋 정보 없음"}
+
+## 변경 파일
+${files || "- 변경 파일 정보 없음"}
+
+## 생각 정리
+- "${pullRequest.title}" 작업에서 가장 신경 써서 확인해야 했던 부분은 무엇이었나?
+- ${primaryFile} 변경이 전체 흐름에 어떤 영향을 준다고 봤나?
+- 이 PR을 진행하면서 느낀 점이나 배운 점은 무엇이었나?
+
+## PR
 - 프로젝트: ${projectName}
-- 저장소: ${commit.repo}
-- 해시: ${shortSha}
-- 시간: ${commit.committedAt}
-- 링크: ${commit.url}
+- 저장소: ${pullRequest.repo}
+- 번호: #${pullRequest.number}
+- 상태: ${pullRequest.mergedAt ? "merged" : pullRequest.state}
+- 브랜치: ${pullRequest.headRef} -> ${pullRequest.baseRef}
+- 시간: ${pullRequest.mergedAt || pullRequest.closedAt || pullRequest.updatedAt}
+- 링크: ${pullRequest.url}
 `;
 }
 

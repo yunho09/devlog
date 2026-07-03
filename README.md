@@ -1,12 +1,12 @@
 # DevLog
 
-DevLog turns your GitHub commits into project-organized development notes for Obsidian.
+DevLog turns your GitHub pull requests into project-organized development notes for Obsidian.
 
 ## Goal
 
-- Collect commits from your GitHub account.
-- Summarize each commit with AI.
-- Write one Markdown note per commit into your Obsidian vault.
+- Collect pull requests from your GitHub account.
+- Summarize each pull request with AI.
+- Write one Markdown note per pull request into your Obsidian folder.
 - Organize notes into folders by project.
 
 ## Setup
@@ -30,7 +30,7 @@ GEMINI_API_KEY=...
 
 `GEMINI_API_KEY` is optional but recommended for free AI summaries through
 Google AI Studio. If both `GEMINI_API_KEY` and `OPENAI_API_KEY` are empty, DevLog
-writes a basic note from the commit message without calling an AI API.
+writes a basic note from the PR title, body, commits, and changed files without calling an AI API.
 
 ## Usage
 
@@ -38,13 +38,13 @@ writes a basic note from the commit message without calling an AI API.
 npm run today
 ```
 
-To write only new commits from the recent sync window:
+To write only new pull requests from the recent sync window:
 
 ```bash
 npm run sync
 ```
 
-`sync` stores processed commit hashes in `OBSIDIAN_VAULT/Obsidian/.devlog-state.json`, so repeated runs skip commits that already have notes.
+`sync` stores processed pull request ids in `OBSIDIAN_VAULT/Obsidian/.devlog-state.json`, so repeated runs skip PRs that already have notes.
 
 ## Automatic Sync
 
@@ -67,7 +67,7 @@ This writes notes like:
 project-repo/
   Obsidian/
     project-name/
-      2026-07-02-a1b2c3d.md
+      2026-07-02-pr-12.md
 ```
 
 Each note uses this structure:
@@ -81,7 +81,15 @@ Each note uses this structure:
 
 ## 의도
 
-## 커밋
+## 포함된 커밋
+
+## 변경 파일
+
+## 생각 정리
+- PR 내용과 변경 파일에 맞춘 질문 2개
+- 작업하면서 느낀 점이나 배운 점을 묻는 질문 1개
+
+## PR
 ```
 
 Or link the CLI locally:

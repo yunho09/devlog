@@ -1,11 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-export async function writeCommitNote({ vaultPath, devlogDir, dateLabel, commit, markdown }) {
-  const projectName = getProjectName(commit.repo);
+export async function writePullRequestNote({ vaultPath, devlogDir, dateLabel, pullRequest, markdown }) {
+  const projectName = getProjectName(pullRequest.repo);
   const directory = path.join(vaultPath, devlogDir, projectName);
-  const shortSha = commit.sha.slice(0, 7);
-  const filePath = path.join(directory, `${dateLabel}-${shortSha}.md`);
+  const filePath = path.join(directory, `${dateLabel}-pr-${pullRequest.number}.md`);
 
   await fs.mkdir(directory, { recursive: true });
   await fs.writeFile(filePath, markdown, "utf8");
