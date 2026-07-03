@@ -20,9 +20,11 @@ Edit `.env`:
 ```bash
 GITHUB_TOKEN=...
 GITHUB_USERNAME=...
-OBSIDIAN_VAULT=/path/to/your/obsidian/vault
-OBSIDIAN_DEVLOG_DIR=DevLog
+OBSIDIAN_VAULT=/path/to/your/project/repo
+OBSIDIAN_DEVLOG_DIR=Obsidian
 DEVLOG_SYNC_DAYS=7
+DEVLOG_INCLUDED_REPOS=
+DEVLOG_EXCLUDED_REPOS=til
 GEMINI_API_KEY=...
 ```
 
@@ -42,7 +44,7 @@ To write only new commits from the recent sync window:
 npm run sync
 ```
 
-`sync` stores processed commit hashes in `OBSIDIAN_VAULT/DevLog/.devlog-state.json`, so repeated runs skip commits that already have notes.
+`sync` stores processed commit hashes in `OBSIDIAN_VAULT/Obsidian/.devlog-state.json`, so repeated runs skip commits that already have notes.
 
 ## Automatic Sync
 
@@ -62,8 +64,8 @@ systemctl --user disable --now devlog-sync.timer
 This writes notes like:
 
 ```text
-OBSIDIAN_VAULT/
-  DevLog/
+project-repo/
+  Obsidian/
     project-name/
       2026-07-02-a1b2c3d.md
 ```

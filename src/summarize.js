@@ -11,24 +11,32 @@ export async function summarizeCommit({
   const prompt = buildPrompt({ dateLabel, commit, projectName, shortSha });
 
   if (geminiApiKey) {
-    return summarizeWithGemini({
-      apiKey: geminiApiKey,
-      model: geminiModel,
-      prompt,
-      dateLabel
-    });
+    try {
+      return await summarizeWithGemini({
+        apiKey: geminiApiKey,
+        model: geminiModel,
+        prompt,
+        dateLabel
+      });
+    } catch (error) {
+      console.warn(`${error.message} Falling back to non-AI note.`);
+    }
   }
 
   if (openaiApiKey) {
-    return summarizeWithOpenAI({
-      apiKey: openaiApiKey,
-      model: openaiModel,
-      prompt,
-      dateLabel
-    });
+    try {
+      return await summarizeWithOpenAI({
+        apiKey: openaiApiKey,
+        model: openaiModel,
+        prompt,
+        dateLabel
+      });
+    } catch (error) {
+      console.warn(`${error.message} Falling back to non-AI note.`);
+    }
   }
 
-  return buildBasicCommitNote({ dateLabel, commit, projectName, shortSha });
+  return buildBasicCommitNote({ dateLabel, commit, projectName, shortSha, reason: "AI API를 사용할 수 없어" });
 }
 
 async function summarizeWithGemini({ apiKey, model, prompt, dateLabel }) {
@@ -127,13 +135,13 @@ Commit details:
 ${commitText}`;
 }
 
-function buildBasicCommitNote({ dateLabel, commit, projectName, shortSha }) {
+function buildBasicCommitNote({ dateLabel, commit, projectName, shortSha, reason }) {
   const subject = commit.message.split(/\r?\n/).find(Boolean) || "커밋 메시지 없음";
 
   return `# ${dateLabel}
 
 ## 요약
-${projectName} 프로젝트에서 "${subject}" 작업이 기록되었습니다. AI API 키가 없어 커밋 메시지 기준의 기본 노트로 생성했습니다.
+${projectName} 프로젝트에서 "${subject}" 작업이 기록되었습니다. ${reason} 커밋 메시지 기준의 기본 노트로 생성했습니다.
 
 ## 변경 내용
 - 커밋 메시지: ${subject}

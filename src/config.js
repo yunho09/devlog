@@ -44,12 +44,25 @@ export function getConfig() {
     githubUsername: process.env.GITHUB_USERNAME,
     obsidianVault: process.env.OBSIDIAN_VAULT,
     obsidianDevlogDir: process.env.OBSIDIAN_DEVLOG_DIR || "DevLog",
+    includedRepos: parseList(process.env.DEVLOG_INCLUDED_REPOS),
+    excludedRepos: parseList(process.env.DEVLOG_EXCLUDED_REPOS),
     geminiApiKey: normalizeOptionalGeminiKey(process.env.GEMINI_API_KEY),
     geminiModel: process.env.GEMINI_MODEL || "gemini-3.5-flash",
     openaiApiKey: normalizeOptionalOpenAIKey(process.env.OPENAI_API_KEY),
     openaiModel: process.env.OPENAI_MODEL || "gpt-4.1-mini",
     syncDays: parsePositiveInteger(process.env.DEVLOG_SYNC_DAYS, 7)
   };
+}
+
+function parseList(value) {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
 }
 
 function normalizeOptionalGeminiKey(value) {

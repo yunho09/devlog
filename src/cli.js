@@ -39,7 +39,7 @@ async function runToday(config) {
     username: config.githubUsername,
     since: range.since,
     until: range.until
-  });
+  }).then((items) => filterCommits(items, config));
 
   if (commits.length === 0) {
     console.log("No commits found for today.");
@@ -65,7 +65,7 @@ async function runSync(config) {
     username: config.githubUsername,
     since: range.since,
     until: range.until
-  });
+  }).then((items) => filterCommits(items, config));
 
   const newCommits = commits.filter((commit) => !processed.has(commit.sha));
 
@@ -107,6 +107,19 @@ async function writeCommit(config, commit) {
   });
 }
 
+function filterCommits(commits, config) {
+  return commits.filter((commit) => {
+    const repo = commit.repo.toLowerCase();
+    const repoName = repo.split("/").pop();
+
+    if (config.includedRepos.length > 0) {
+      return config.includedRepos.includes(repo) || config.includedRepos.includes(repoName);
+    }
+
+    return !config.excludedRepos.includes(repo) && !config.excludedRepos.includes(repoName);
+  });
+}
+
 function printHelp() {
   console.log(`DevLog
 
@@ -119,6 +132,8 @@ Environment:
   GITHUB_USERNAME
   OBSIDIAN_VAULT
   OBSIDIAN_DEVLOG_DIR
+  DEVLOG_INCLUDED_REPOS optional comma-separated repo names
+  DEVLOG_EXCLUDED_REPOS optional comma-separated repo names
   GEMINI_API_KEY optional
   GEMINI_MODEL optional
   OPENAI_API_KEY optional fallback
