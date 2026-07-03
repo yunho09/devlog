@@ -1,0 +1,11 @@
+[Unit]
+Description=Run DevLog sync every 30 minutes
+
+[Timer]
+OnCalendar=*:0/30
+AccuracySec=1min
+Persistent=true
+Unit=devlog-sync.service
+
+[Install]
+WantedBy=timers.target

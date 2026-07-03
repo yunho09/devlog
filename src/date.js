@@ -13,6 +13,19 @@ export function todayRange() {
   };
 }
 
+export function recentRange(days = 7) {
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(start.getDate() - Math.max(days - 1, 0));
+  start.setHours(0, 0, 0, 0);
+
+  return {
+    label: formatDate(now),
+    since: start.toISOString(),
+    until: now.toISOString()
+  };
+}
+
 export function formatDate(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");

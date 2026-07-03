@@ -1,0 +1,7 @@
+[Unit]
+Description=Sync DevLog notes from GitHub to Obsidian
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/yunho/project/devlog
+ExecStart=/usr/bin/npm run sync

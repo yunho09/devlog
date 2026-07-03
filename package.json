@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node src/cli.js",
     "today": "node src/cli.js today",
+    "sync": "node src/cli.js sync",
     "setup:git": "node scripts/setup-git.js"
   },
   "engines": {

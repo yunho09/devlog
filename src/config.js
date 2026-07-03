@@ -32,7 +32,7 @@ export function loadEnv(projectRoot = process.cwd()) {
 }
 
 export function getConfig() {
-  const required = ["GITHUB_TOKEN", "GITHUB_USERNAME", "OBSIDIAN_VAULT", "OPENAI_API_KEY"];
+  const required = ["GITHUB_TOKEN", "GITHUB_USERNAME", "OBSIDIAN_VAULT"];
   const missing = required.filter((key) => !process.env[key]);
 
   if (missing.length > 0) {
@@ -44,7 +44,36 @@ export function getConfig() {
     githubUsername: process.env.GITHUB_USERNAME,
     obsidianVault: process.env.OBSIDIAN_VAULT,
     obsidianDevlogDir: process.env.OBSIDIAN_DEVLOG_DIR || "DevLog",
-    openaiApiKey: process.env.OPENAI_API_KEY,
-    openaiModel: process.env.OPENAI_MODEL || "gpt-4.1-mini"
+    geminiApiKey: normalizeOptionalGeminiKey(process.env.GEMINI_API_KEY),
+    geminiModel: process.env.GEMINI_MODEL || "gemini-3.5-flash",
+    openaiApiKey: normalizeOptionalOpenAIKey(process.env.OPENAI_API_KEY),
+    openaiModel: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+    syncDays: parsePositiveInteger(process.env.DEVLOG_SYNC_DAYS, 7)
   };
+}
+
+function normalizeOptionalGeminiKey(value) {
+  if (!value || value === "your_gemini_key_here" || value === "...") {
+    return "";
+  }
+
+  return value;
+}
+
+function normalizeOptionalOpenAIKey(value) {
+  if (!value || value === "sk-your_key_here" || value === "...") {
+    return "";
+  }
+
+  return value;
+}
+
+function parsePositiveInteger(value, fallback) {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
