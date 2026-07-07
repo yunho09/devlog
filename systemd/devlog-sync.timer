@@ -1,8 +1,8 @@
 [Unit]
-Description=Run DevLog sync every 30 minutes
+Description=Run DevLog sync every 3 hours
 
 [Timer]
-OnCalendar=*:0/30
+OnCalendar=*-*-* 00/3:00:00
 AccuracySec=1min
 Persistent=true
 Unit=devlog-sync.service
