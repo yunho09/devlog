@@ -43,7 +43,7 @@ export function getConfig() {
     githubToken: process.env.GITHUB_TOKEN,
     githubUsername: process.env.GITHUB_USERNAME,
     obsidianVault: process.env.OBSIDIAN_VAULT,
-    obsidianDevlogDir: process.env.OBSIDIAN_DEVLOG_DIR || "DevLog",
+    obsidianDevlogDir: process.env.OBSIDIAN_DEVLOG_DIR || "devlog",
     includedRepos: parseList(process.env.DEVLOG_INCLUDED_REPOS),
     excludedRepos: parseList(process.env.DEVLOG_EXCLUDED_REPOS),
     geminiApiKey: normalizeOptionalGeminiKey(process.env.GEMINI_API_KEY),

@@ -21,7 +21,7 @@ Edit `.env`:
 GITHUB_TOKEN=...
 GITHUB_USERNAME=...
 OBSIDIAN_VAULT=/path/to/your/project/repo
-OBSIDIAN_DEVLOG_DIR=Obsidian
+OBSIDIAN_DEVLOG_DIR=devlog
 DEVLOG_SYNC_DAYS=7
 DEVLOG_INCLUDED_REPOS=
 DEVLOG_EXCLUDED_REPOS=til
@@ -44,7 +44,7 @@ To write only new pull requests from the recent sync window:
 npm run sync
 ```
 
-`sync` stores processed pull request ids in `OBSIDIAN_VAULT/Obsidian/.devlog-state.json`, so repeated runs skip PRs that already have notes.
+`sync` stores processed pull request ids in `OBSIDIAN_VAULT/devlog/.devlog-state.json`, so repeated runs skip PRs that already have notes.
 
 ## Automatic Sync
 
@@ -65,7 +65,7 @@ This writes notes like:
 
 ```text
 project-repo/
-  Obsidian/
+  devlog/
     project-name/
       2026-07-02-pr-12.md
 ```

@@ -5,4 +5,5 @@ coverage/
 dist/
 *.log
 .devlog-state.json
-Obsidian/.obsidian/
+devlog/.obsidian/
+.omc/
