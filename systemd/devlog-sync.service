@@ -1,5 +1,7 @@
 [Unit]
 Description=Sync DevLog notes from GitHub to Obsidian
+StartLimitIntervalSec=30min
+StartLimitBurst=4
 
 [Service]
 Type=oneshot
@@ -7,3 +9,5 @@ WorkingDirectory=/home/yunho/project/devlog
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
 ExecStart=/usr/bin/npm run sync
 ExecStart=/home/yunho/project/devlog/scripts/publish.sh
+Restart=on-failure
+RestartSec=5min
