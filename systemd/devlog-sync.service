@@ -4,4 +4,6 @@ Description=Sync DevLog notes from GitHub to Obsidian
 [Service]
 Type=oneshot
 WorkingDirectory=/home/yunho/project/devlog
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
 ExecStart=/usr/bin/npm run sync
+ExecStart=/home/yunho/project/devlog/scripts/publish.sh

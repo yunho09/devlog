@@ -48,7 +48,9 @@ npm run sync
 
 ## Automatic Sync
 
-This repo includes a user systemd timer that runs `npm run sync` every 30 minutes:
+This repo includes a user systemd timer that runs `npm run sync` every 3 hours and then
+commits and pushes any new notes with `scripts/publish.sh`, so the notes in your Obsidian
+folder stay mirrored on GitHub without manual git work:
 
 ```bash
 systemctl --user status devlog-sync.timer
@@ -60,6 +62,16 @@ To stop automatic sync:
 ```bash
 systemctl --user disable --now devlog-sync.timer
 ```
+
+To run the same sync-then-publish step by hand:
+
+```bash
+npm run sync:push
+```
+
+`publish.sh` only stages `OBSIDIAN_DEVLOG_DIR`, so unrelated working tree changes are left
+alone. It needs a push-capable remote; with an SSH remote the key must have no passphrase
+so the timer can push unattended.
 
 This writes notes like:
 
