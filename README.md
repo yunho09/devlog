@@ -44,7 +44,10 @@ To write only new pull requests from the recent sync window:
 npm run sync
 ```
 
-`sync` stores processed pull request ids in `OBSIDIAN_VAULT/devlog/.devlog-state.json`, so repeated runs skip PRs that already have notes.
+`sync` only writes notes for merged pull requests, so a note is created once at merge time
+and includes every commit pushed to the PR before the merge. Open PRs are skipped until
+they are merged. `sync` stores processed pull request ids in
+`OBSIDIAN_VAULT/devlog/.devlog-state.json`, so repeated runs skip PRs that already have notes.
 
 ## Automatic Sync
 

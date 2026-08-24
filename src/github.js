@@ -1,8 +1,9 @@
-export async function fetchPullRequests({ token, username, since, until }) {
+export async function fetchPullRequests({ token, username, since, until, mergedOnly = false }) {
   const query = [
     "type:pr",
     `author:${username}`,
-    `updated:${since.slice(0, 10)}..${until.slice(0, 10)}`
+    `updated:${since.slice(0, 10)}..${until.slice(0, 10)}`,
+    ...(mergedOnly ? ["is:merged"] : [])
   ].join(" ");
 
   const url = new URL("https://api.github.com/search/issues");

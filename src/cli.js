@@ -64,13 +64,16 @@ async function runSync(config) {
     token: config.githubToken,
     username: config.githubUsername,
     since: range.since,
-    until: range.until
+    until: range.until,
+    mergedOnly: true
   }).then((items) => filterPullRequests(items, config));
 
-  const newPullRequests = pullRequests.filter((pullRequest) => !processed.has(pullRequest.id));
+  const newPullRequests = pullRequests.filter(
+    (pullRequest) => pullRequest.mergedAt && !processed.has(pullRequest.id)
+  );
 
   if (newPullRequests.length === 0) {
-    console.log("No new pull requests found.");
+    console.log("No new merged pull requests found.");
     return;
   }
 
