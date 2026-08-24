@@ -53,7 +53,7 @@ async function summarizeWithGemini({ apiKey, model, prompt, dateLabel }) {
     body: JSON.stringify({
       model,
       system_instruction:
-        "You write concise Korean developer worklogs for Obsidian. Write one note for one GitHub pull request. Focus on what changed, why it matters, the commits included in the PR, and notable files. Avoid hype. Do not invent details that are not supported by the PR data.",
+        "You write concise Korean developer worklogs for Obsidian. Write one note for one GitHub pull request. Focus on what changed, why it matters, troubleshooting the developer went through, the commits included in the PR, and notable files. Avoid hype. Do not invent details that are not supported by the PR data.",
       input: prompt
     })
   });
@@ -82,7 +82,7 @@ async function summarizeWithOpenAI({ apiKey, model, prompt, dateLabel }) {
         {
           role: "system",
           content:
-            "You write concise Korean developer worklogs for Obsidian. Write one note for one GitHub pull request. Focus on what changed, why it matters, the commits included in the PR, and notable files. Avoid hype. Do not invent details that are not supported by the PR data."
+            "You write concise Korean developer worklogs for Obsidian. Write one note for one GitHub pull request. Focus on what changed, why it matters, troubleshooting the developer went through, the commits included in the PR, and notable files. Avoid hype. Do not invent details that are not supported by the PR data."
         },
         {
           role: "user",
@@ -140,6 +140,11 @@ If the PR data is not enough, explicitly say "PR 정보 기준으로는 ..." and
 ## 변경 파일
 - Summarize the important changed files and what they likely affected.
 
+## 트러블 슈팅
+- Describe problems the developer likely hit and how they were resolved, in Korean, as "문제 → 해결" bullet points.
+- Use evidence from the PR body and commits: fix/hotfix/revert commits, bug-related wording, repeated changes to the same file.
+- If the PR data shows no sign of troubleshooting, write exactly one line: "- PR 정보 기준으로는 기록된 트러블 슈팅이 없습니다." Do not invent problems.
+
 ## 생각 정리
 - Ask exactly 3 reflection questions in Korean.
 - Make the first 2 questions specific to what this PR changed, using the PR title, commits, and changed files.
@@ -184,6 +189,11 @@ function buildBasicPullRequestNote({ dateLabel, pullRequest, projectName, reason
     .map((file) => `- ${file.filename} (${file.status}, +${file.additions}/-${file.deletions})`)
     .join("\n");
   const primaryFile = pullRequest.files[0]?.filename || "변경된 파일";
+  const troubleshootingCommits = pullRequest.commits
+    .map((commit) => commit.message.split(/\r?\n/)[0])
+    .filter((message) => /\b(fix|hotfix|revert|bug)\b|버그|오류|에러|수정|해결/i.test(message))
+    .map((message) => `- ${message}`)
+    .join("\n");
 
   return `# ${dateLabel}
 
@@ -203,6 +213,9 @@ ${commits || "- 커밋 정보 없음"}
 
 ## 변경 파일
 ${files || "- 변경 파일 정보 없음"}
+
+## 트러블 슈팅
+${troubleshootingCommits || "- PR 정보 기준으로는 기록된 트러블 슈팅이 없습니다."}
 
 ## 생각 정리
 - "${pullRequest.title}" 작업에서 가장 신경 써서 확인해야 했던 부분은 무엇이었나?
